@@ -6,6 +6,7 @@ from discord import Intents, Message
 from discord import app_commands
 from discord.ext import commands
 from responses import get_response
+import custom_commands
 
 # Load token
 load_dotenv()
@@ -16,6 +17,7 @@ intents: Intents = Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+
 
 # message
 async def send_message(message: Message, user_message: str) -> None:
@@ -32,38 +34,53 @@ async def send_message(message: Message, user_message: str) -> None:
     except Exception as e:
         print(e)
 
+
 # handling startup
 @bot.event
 async def on_ready() -> None:
+    print(f'{bot.user} is now running')
     try:
         synced = await bot.tree.sync()
         print(f"synced {len(synced)} command(s)")
     except Exception as e:
         print(f"synced error: {e}")
 
-    print(f'{bot.user} is now running')
 
 # handling incoming messages
 @bot.event
 async def on_message(message: Message) -> None:
     if message.author == bot.user:
         return
-    username: str = str(message.author)
     user_massage: str = message.content
-    channel: str = str(message.channel)
 
-    print(f'[{channel}] {username}:  "{user_massage}"')
-    await send_message(message, user_massage)
+    # print(f'[{channel}] {username}:  "{user_massage}"')
+    if 'delete' in message.content:
+        await message.delete()
+        print(f'Message deleted')
+    else:
+        await send_message(message, user_massage)
+
 
 # commands
-@bot.tree.command(name="test")
+@bot.tree.command(name="test", description='This is the full description')
 async def test(interaction: discord.Interaction):
     # await interaction.response.send_message("command")
-    await interaction.response.send_message("hello world!")
+    await interaction.response.send_message("hello world! This is a differnt command")
+
+
+@bot.tree.command(name='clear', description='clears all messages from a channel')
+async def clear(ctx):
+    await custom_commands.clear_channel(ctx)
+
+
+@bot.tree.command(name='shy', description=':point_right::point_left:')
+async def shy(ctx):
+    await custom_commands.shy(ctx)
 
 # main entry pint
-def main () -> None:
+def main() -> None:
     bot.run(token=TOKEN)
+
 
 if __name__ == '__main__':
     main()
